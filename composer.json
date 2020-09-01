@@ -1,0 +1,30 @@
+{
+  "name": "avantcorp/laravel-zoho-client",
+  "description": "Zoho OAuth2 client for Laravel",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Ali Saleem",
+      "email": "alisaleem@outlook.com"
+    }
+  ],
+  "require": {
+    "league/oauth2-client": "^2.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "Avant\\LaravelZohoClient\\": "src/"
+    }
+  },
+  "require-dev": {
+    "orchestra/testbench": "^5.4"
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "\\Avant\\LaravelZohoClient\\ZohoClientServiceProvider"
+      ]
+    }
+  }
+}
