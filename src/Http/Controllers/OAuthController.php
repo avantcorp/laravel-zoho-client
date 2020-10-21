@@ -1,34 +1,35 @@
 <?php
 
-namespace Avant\LaravelZohoClient\Http\Controllers;
+namespace Avant\ZohoClient\Http\Controllers;
 
-use Avant\LaravelZohoClient\Http\Requests\Request;
-use Avant\LaravelZohoClient\OAuth2\Provider;
-use Avant\LaravelZohoClient\ZohoAccessToken;
-use Avant\LaravelZohoClient\Http\Requests\CallbackRequest;
+use Avant\ZohoClient\Http\Requests\AuthenticateRequest;
+use Avant\ZohoClient\OAuth2\Provider;
+use Avant\ZohoClient\ZohoAccessToken;
+use Avant\ZohoClient\Http\Requests\CallbackAuthenticateRequest;
 
 class OAuthController
 {
-    public function authenticate(Provider $provider, Request $request)
+    public function authenticate(Provider $provider, AuthenticateRequest $request)
     {
-        $authorizationUrl = $provider->getAuthorizationUrl(['access_type' => 'offline']);
+        $authorizationUrl = $provider->getAuthorizationUrl(['access_type' => 'offline', 'prompt' => 'consent']);
+
         session()->put($request->getStateKey(), $provider->getState());
 
         return redirect($authorizationUrl);
     }
 
-    public function callback(Provider $provider, CallbackRequest $request)
+    public function callback(Provider $provider, CallbackAuthenticateRequest $request)
     {
         session()->remove($request->getStateKey());
-        $token = $provider->getAccessToken('authorization_code', ['code' => $request->code]);
-        $zohoAccessToken = ZohoAccessToken::updateOrCreate(
-            ['user_id' => $request->user()->id],
-            ['data' => $token->jsonSerialize()]
-        );
-        if ($token->getRefreshToken()) {
-            $zohoAccessToken->update(['refresh_token' => $token->getRefreshToken()]);
-        }
 
-        return response()->json($token->jsonSerialize());
+        $token = $provider->getAccessToken('authorization_code', ['code' => $request->code]);
+        ZohoAccessToken::updateOrCreate([
+            'user_id' => $request->user()->id,
+        ], [
+            'token'         => $token,
+            'refresh_token' => $token->getRefreshToken(),
+        ]);
+
+        return redirect('/');
     }
 }

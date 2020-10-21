@@ -1,8 +1,8 @@
 <?php
 
-namespace Avant\LaravelZohoClient\OAuth2;
+namespace Avant\ZohoClient\OAuth2;
 
-use Avant\LaravelZohoClient\ZohoClientServiceProvider;
+use Avant\ZohoClient\ZohoClientServiceProvider;
 use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Token\AccessToken;
@@ -36,7 +36,12 @@ class Provider extends AbstractProvider
 
     protected function getDefaultScopes(): array
     {
-        return config(ZohoClientServiceProvider::TAG . '.scopes');
+        $scopes = config(ZohoClientServiceProvider::TAG.'services.zoho.scopes');
+        if (is_string($scopes)) {
+            $scopes = array_map('trim', explode(',', $scopes));
+        }
+
+        return $scopes;
     }
 
     protected function checkResponse(ResponseInterface $response, $data): void

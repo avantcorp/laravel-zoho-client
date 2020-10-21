@@ -1,33 +1,18 @@
 <?php
 
-namespace Avant\LaravelZohoClient;
+namespace Avant\ZohoClient;
 
-use Avant\LaravelZohoClient\OAuth2\Provider;
+use Avant\ZohoClient\OAuth2\Provider;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 
 abstract class ZohoClient
 {
-    protected $authToken;
-    protected $baseUrl;
+    protected $user;
 
     public function __construct($user)
     {
-        $user = $user instanceof Model ? $user->getKey() : $user;
-        $this->authToken = cache()->remember(
-            ZohoClientServiceProvider::TAG . '.token.' . Hash::make($user),
-            config(ZohoClientServiceProvider::TAG . '.cache_timeout'),
-            function () use ($user) {
-                $zohoAccessToken = ZohoAccessToken::forUserId($user);
-                $accessToken = app(Provider::class)->getAccessToken(
-                    'refresh_token',
-                    ['refresh_token' => $zohoAccessToken->refresh_token]
-                );
-                $zohoAccessToken->update(['data' => $accessToken->jsonSerialize()]);
-                return $zohoAccessToken->token;
-            }
-        );
+        $this->user = $user instanceof Model ? $user->getKey() : $user;
     }
 
     protected function getBaseUrl(): string
@@ -37,10 +22,22 @@ abstract class ZohoClient
 
     protected function request()
     {
-        return Http::baseUrl($this->baseUrl)
+        return Http::baseUrl($this->getBaseUrl())
             ->asJson()
-            ->withHeaders([
-                'Authorization' => "Zoho-oauthtoken {$this->authToken}",
+            ->withHeaders(['Authorization' => 'Zoho-oauthtoken '.$this->getToken()]);
+    }
+
+    private function getToken()
+    {
+        return once(function () {
+            $zohoAccessToken = ZohoAccessToken::forUser($this->user);
+            $zohoAccessToken->update([
+                'data' => app(Provider::class)
+                    ->getAccessToken('refresh_token', ['refresh_token' => $zohoAccessToken->refresh_token])
+                    ->jsonSerialize(),
             ]);
+
+            return $zohoAccessToken->token->getToken();
+        });
     }
 }

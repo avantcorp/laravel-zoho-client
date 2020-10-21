@@ -1,24 +1,24 @@
 <?php
 
-namespace Avant\LaravelZohoClient\Http\Requests;
+namespace Avant\ZohoClient\Http\Requests;
 
 /**
  * @property string $state
  * @property string $code
  */
-class CallbackRequest extends Request
+class CallbackAuthenticateRequest extends AuthenticateRequest
 {
     public function authorize(): bool
     {
-        return auth()->check()
+        return parent::authorize()
             && $this->state === session($this->getStateKey());
     }
 
     public function rules(): array
     {
         return [
-            'state' => 'required',
-            'code'  => 'required',
+            'state' => ['required', 'string'],
+            'code'  => ['required', 'string'],
         ];
     }
 }

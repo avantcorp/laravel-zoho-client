@@ -12,8 +12,7 @@ class CreateZohoAccessTokensTable extends Migration
             $table->increments('id');
             $table->foreignId('user_id');
             $table->text('data');
-            $table->string('refresh_token')
-                ->nullable();
+            $table->string('refresh_token')->nullable();
             $table->timestamps();
         });
     }

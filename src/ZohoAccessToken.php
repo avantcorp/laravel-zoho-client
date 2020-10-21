@@ -1,26 +1,25 @@
 <?php
 
-namespace Avant\LaravelZohoClient;
+namespace Avant\ZohoClient;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use League\OAuth2\Client\Token\AccessToken;
 use League\OAuth2\Client\Token\AccessTokenInterface;
 
 /**
- * @mixin Builder
+ * @mixin \Illuminate\Database\Eloquent\Builder
  *
  * @property int $id
  * @property int $user_id
- * @property AccessTokenInterface $token
+ * @property \League\OAuth2\Client\Token\AccessTokenInterface $token
  * @property string $refresh_token
  * @property $user
  */
 class ZohoAccessToken extends Model
 {
     protected $fillable = [
-        'data',
+        'user_id', 'token', 'refresh_token',
     ];
 
     protected $casts = [
@@ -32,13 +31,20 @@ class ZohoAccessToken extends Model
         return new AccessToken($this->data);
     }
 
-    public function user(): BelongsTo
+    public function setTokenAttribute(AccessTokenInterface $token)
     {
-        return $this->belongsTo(config(ZohoClientServiceProvider::TAG . '.user_class'));
+        $this->attributes['data'] = $token->jsonSerialize();
     }
 
-    public static function forUserId(int $userId): self
+    public function user(): BelongsTo
     {
-        return self::query()->where('user_id', $userId)->firstOrFail();
+        return $this->belongsTo(config('zoho_client.user_class'));
+    }
+
+    public static function forUser($user): self
+    {
+        $user = $user instanceof Model ? $user->getKey() : $user;
+
+        return self::where('user_id', $user)->firstOrFail();
     }
 }
