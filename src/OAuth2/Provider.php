@@ -2,7 +2,6 @@
 
 namespace Avant\ZohoClient\OAuth2;
 
-use Avant\ZohoClient\ZohoClientServiceProvider;
 use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Token\AccessToken;
@@ -10,12 +9,16 @@ use Psr\Http\Message\ResponseInterface;
 
 class Provider extends AbstractProvider
 {
-    public function __construct(string $clientId, string $clientSecret)
+    protected array $defaultScopes;
+
+    public function __construct(string $clientId, string $clientSecret, string $redirectUri, array $defaultScopes)
     {
+        $this->defaultScopes = $defaultScopes;
+
         parent::__construct([
             'clientId'     => $clientId,
             'clientSecret' => $clientSecret,
-            'redirectUri'  => route(ZohoClientServiceProvider::TAG . '.callback'),
+            'redirectUri'  => $redirectUri,
         ]);
     }
 
@@ -36,12 +39,7 @@ class Provider extends AbstractProvider
 
     protected function getDefaultScopes(): array
     {
-        $scopes = config(ZohoClientServiceProvider::TAG.'services.zoho.scopes');
-        if (is_string($scopes)) {
-            $scopes = array_map('trim', explode(',', $scopes));
-        }
-
-        return $scopes;
+        return $this->defaultScopes;
     }
 
     protected function checkResponse(ResponseInterface $response, $data): void

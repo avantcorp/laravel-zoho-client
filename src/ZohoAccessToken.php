@@ -33,7 +33,7 @@ class ZohoAccessToken extends Model
 
     public function setTokenAttribute(AccessTokenInterface $token)
     {
-        $this->attributes['data'] = $token->jsonSerialize();
+        $this->data = $token->jsonSerialize();
     }
 
     public function user(): BelongsTo

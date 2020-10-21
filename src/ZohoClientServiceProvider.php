@@ -12,7 +12,14 @@ class ZohoClientServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/zoho_client.php', 'zoho_client');
 
         $this->app->singleton(Provider::class, function () {
-            return new Provider(config('services.zoho.client_id'), config('services.zoho.client_secret'));
+            $defaultScopes = config('services.zoho_client.scopes');
+
+            return new Provider(
+                config('services.zoho_client.client_id'),
+                config('services.zoho_client.client_secret'),
+                route('zohoClient.callback'),
+                is_array($defaultScopes) ? $defaultScopes : array_map('trim', explode(',', $defaultScopes))
+            );
         });
     }
 
