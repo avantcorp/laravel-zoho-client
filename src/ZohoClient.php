@@ -3,16 +3,16 @@
 namespace Avant\ZohoClient;
 
 use Avant\ZohoClient\OAuth2\Provider;
-use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 
 abstract class ZohoClient
 {
-    protected $user;
+    private ZohoAccessToken $zohoAccessToken;
 
     public function __construct($user)
     {
-        $this->user = $user instanceof Model ? $user->getKey() : $user;
+        $this->zohoAccessToken = ZohoAccessToken::forUser($user);
     }
 
     protected function getBaseUrl(): string
@@ -29,15 +29,14 @@ abstract class ZohoClient
 
     private function getToken()
     {
-        return once(function () {
-            $zohoAccessToken = ZohoAccessToken::forUser($this->user);
-            $zohoAccessToken->update([
-                'data' => app(Provider::class)
-                    ->getAccessToken('refresh_token', ['refresh_token' => $zohoAccessToken->refresh_token])
-                    ->jsonSerialize(),
+        $tokenExpiry = Carbon::createFromTimestamp($this->zohoAccessToken->token->getExpires());
+        if ($tokenExpiry->lessThanOrEqualTo(now()->addSeconds(10))) {
+            $this->zohoAccessToken->update([
+                'token' => app(Provider::class)
+                    ->getAccessToken('refresh_token', ['refresh_token' => $this->zohoAccessToken->refresh_token]),
             ]);
+        }
 
-            return $zohoAccessToken->token->getToken();
-        });
+        return $this->zohoAccessToken->token->getToken();
     }
 }
