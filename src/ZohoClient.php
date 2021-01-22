@@ -13,6 +13,10 @@ abstract class ZohoClient
     public function __construct($user)
     {
         $this->zohoAccessToken = ZohoAccessToken::forUser($user);
+
+        if(method_exists($this, 'boot')){
+            app()->call([$this, 'boot']);
+        }
     }
 
     protected function getBaseUrl(): string
