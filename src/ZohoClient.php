@@ -10,15 +10,12 @@ use Illuminate\Support\Facades\Http;
 
 abstract class ZohoClient
 {
-    private ZohoAccessToken $zohoAccessToken;
-
-    /** @var int */
+    /** @var int|string */
     private $user;
 
     public function __construct($user)
     {
         $this->user = $user instanceof Model ? $user->getKey() : $user;
-        $this->zohoAccessToken = ZohoAccessToken::forUser($user);
 
         if (method_exists($this, 'boot')) {
             app()->call([$this, 'boot']);
