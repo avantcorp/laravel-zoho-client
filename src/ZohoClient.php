@@ -36,7 +36,7 @@ abstract class ZohoClient
     {
         return Http::baseUrl($this->getBaseUrl())
             ->asJson()
-            ->withHeaders(['Authorization' => 'Zoho-oauthtoken '.$this->getToken()]);
+            ->withToken($this->getToken(), 'Zoho-oauthtoken');
     }
 
     private function getToken()
