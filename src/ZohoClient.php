@@ -17,6 +17,14 @@ abstract class ZohoClient
         if(method_exists($this, 'boot')){
             app()->call([$this, 'boot']);
         }
+
+        collect(class_uses($this))
+            ->each(function (string $trait) {
+                $method = 'boot'.class_basename($trait);
+                if (method_exists($this, $method)) {
+                    app()->call([$this, $method]);
+                }
+            });
     }
 
     protected function getBaseUrl(): string
