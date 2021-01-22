@@ -4,6 +4,7 @@ namespace Avant\ZohoClient;
 
 use Avant\ZohoClient\OAuth2\Provider;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 abstract class ZohoClient
@@ -43,10 +44,12 @@ abstract class ZohoClient
     {
         $tokenExpiry = Carbon::createFromTimestamp($this->zohoAccessToken->token->getExpires());
         if ($tokenExpiry->lessThanOrEqualTo(now()->addSeconds(10))) {
-            $this->zohoAccessToken->update([
-                'token' => app(Provider::class)
-                    ->getAccessToken('refresh_token', ['refresh_token' => $this->zohoAccessToken->refresh_token]),
-            ]);
+            $lock = Cache::lock("zoho-client.refresh_token.{$this->zohoAccessToken->id}")->get(function () {
+                $this->zohoAccessToken->update([
+                    'token' => app(Provider::class)
+                        ->getAccessToken('refresh_token', ['refresh_token' => $this->zohoAccessToken->refresh_token]),
+                ]);
+            });
         }
 
         return $this->zohoAccessToken->token->getToken();
