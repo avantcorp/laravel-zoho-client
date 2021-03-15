@@ -13,6 +13,12 @@ abstract class ZohoClient
     /** @var int|string */
     private $user;
 
+    /** @var Carbon */
+    private $tokenExpiry;
+
+    /** @var string */
+    private $token;
+
     public function __construct($user)
     {
         $this->user = $user instanceof Model ? $user->getKey() : $user;
@@ -45,21 +51,24 @@ abstract class ZohoClient
     private function getToken()
     {
         return Cache::lock("zoho-client.refresh_token.{$this->user}")
-            ->get(fn() => tap(
-                ZohoAccessToken::forUser($this->user),
-                function (ZohoAccessToken $zohoAccessToken) {
-                    $tokenExpiry = Carbon::createFromTimestamp($zohoAccessToken->token->getExpires());
-                    if ($tokenExpiry->lessThanOrEqualTo(now()->addSeconds(10))) {
-                        $zohoAccessToken->update([
-                            'token' => app(Provider::class)->getAccessToken(
-                                'refresh_token',
-                                ['refresh_token' => $zohoAccessToken->refresh_token]
-                            ),
-                        ]);
-                    }
-                })
-                ->token
-                ->getToken()
-            );
+            ->block(10, function () {
+                if (is_null($this->tokenExpiry) || is_null($this->token)) {
+                    $zohoAccessToken = ZohoAccessToken::forUser($this->user);
+                    $this->tokenExpiry = Carbon::createFromTimestamp($zohoAccessToken->token->getExpires());
+                    $this->token = $zohoAccessToken->token->getToken();
+                }
+                if ($this->tokenExpiry->lessThanOrEqualTo(now()->addSeconds(10))) {
+                    $zohoAccessToken->update([
+                        'token' => app(Provider::class)->getAccessToken(
+                            'refresh_token',
+                            ['refresh_token' => $zohoAccessToken->refresh_token]
+                        ),
+                    ]);
+                    $this->tokenExpiry = Carbon::createFromTimestamp($zohoAccessToken->token->getExpires());
+                    $this->token = $zohoAccessToken->token->getToken();
+                }
+
+                return $this->token;
+            });
     }
 }
