@@ -58,6 +58,7 @@ abstract class ZohoClient
                     $this->token = $zohoAccessToken->token->getToken();
                 }
                 if ($this->tokenExpiry->lessThanOrEqualTo(now()->addSeconds(10))) {
+                    $zohoAccessToken = ZohoAccessToken::forUser($this->user);
                     $zohoAccessToken->update([
                         'token' => app(Provider::class)->getAccessToken(
                             'refresh_token',
