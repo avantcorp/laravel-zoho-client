@@ -1,11 +1,11 @@
 <?php
 
-use Avant\ZohoClient\Http\Controllers\OAuthController;
+use Avant\Zoho\Http\Controllers\OAuthController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(config('zoho_client.middleware'))
-    ->prefix('zoho-client')
-    ->as('zoho-client.')
+Route::middleware(['web'])
+    ->prefix('zoho')
+    ->as('zoho.')
     ->group(function () {
         Route::get('authenticate', [OAuthController::class, 'authenticate'])->name('authenticate');
         Route::get('callback', [OAuthController::class, 'callback'])->name('callback');

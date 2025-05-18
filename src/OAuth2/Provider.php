@@ -1,6 +1,6 @@
 <?php
 
-namespace Avant\ZohoClient\OAuth2;
+namespace Avant\Zoho\OAuth2;
 
 use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;

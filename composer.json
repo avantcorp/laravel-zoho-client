@@ -20,13 +20,13 @@
     },
     "autoload": {
         "psr-4": {
-            "Avant\\ZohoClient\\": "src/"
+            "Avant\\Zoho\\": "src/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "\\Avant\\ZohoClient\\ZohoClientServiceProvider"
+                "\\Avant\\Zoho\\ZohoServiceProvider"
             ]
         }
     }

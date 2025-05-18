@@ -1,6 +1,6 @@
 <?php
 
-namespace Avant\ZohoClient\Http\Requests;
+namespace Avant\Zoho\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -9,7 +9,7 @@ class CallbackAuthenticateRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'state_confirmation' => session()->get('zoho-client.state'),
+            'state_confirmation' => session()->get('zoho.state'),
         ]);
     }
 
@@ -23,6 +23,6 @@ class CallbackAuthenticateRequest extends FormRequest
 
     protected function passedValidation(): void
     {
-        session()->forget('zoho-client.state');
+        session()->forget('zoho.state');
     }
 }

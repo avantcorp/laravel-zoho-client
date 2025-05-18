@@ -1,6 +1,6 @@
 <?php
 
-namespace Avant\ZohoClient\OAuth2;
+namespace Avant\Zoho\OAuth2;
 
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use League\OAuth2\Client\Tool\ArrayAccessorTrait;

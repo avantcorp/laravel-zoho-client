@@ -1,14 +1,14 @@
 <?php
 
-namespace Avant\ZohoClient;
+namespace Avant\Zoho;
 
-use Avant\ZohoClient\OAuth2\Provider;
+use Avant\Zoho\OAuth2\Provider;
 use Carbon\Carbon;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Spatie\Valuestore\Valuestore;
 
-abstract class ZohoClient
+abstract class Client
 {
     protected string $baseUrl;
     private ?Carbon $tokenExpiry = null;
@@ -30,9 +30,9 @@ abstract class ZohoClient
     private function getToken(): string
     {
         return cache()
-            ->lock('zoho-client.refresh-token')
+            ->lock('zoho.token')
             ->block(10, function () {
-                $store = Valuestore::make(config('zoho_client.token_storage_path'));
+                $store = Valuestore::make(config('services.zoho.token_storage_path'));
                 if (is_null($this->tokenExpiry) || is_null($this->token)) {
                     $zohoAccessToken = $store->get('token');
                     $this->tokenExpiry = Carbon::createFromTimestamp($zohoAccessToken->token->getExpires());
