@@ -5,7 +5,6 @@ namespace Avant\ZohoClient\Http\Controllers;
 use Avant\ZohoClient\Http\Requests\CallbackAuthenticateRequest;
 use Avant\ZohoClient\OAuth2\Provider;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Gate;
 use Spatie\Valuestore\Valuestore;
 
