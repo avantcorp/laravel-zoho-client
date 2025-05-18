@@ -2,23 +2,27 @@
 
 namespace Avant\ZohoClient\Http\Requests;
 
-/**
- * @property string $state
- * @property string $code
- */
-class CallbackAuthenticateRequest extends AuthenticateRequest
+use Illuminate\Foundation\Http\FormRequest;
+
+class CallbackAuthenticateRequest extends FormRequest
 {
-    public function authorize(): bool
+    protected function prepareForValidation(): void
     {
-        return parent::authorize()
-            && $this->state === session($this->getStateKey());
+        $this->merge([
+            'state_confirmation' => session()->get('zoho-client.state'),
+        ]);
     }
 
     public function rules(): array
     {
         return [
-            'state' => ['required', 'string'],
+            'state' => ['required', 'string', 'confirmed'],
             'code'  => ['required', 'string'],
         ];
+    }
+
+    protected function passedValidation(): void
+    {
+        session()->forget('zoho-client.state');
     }
 }

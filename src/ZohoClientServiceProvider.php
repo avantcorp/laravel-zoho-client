@@ -7,36 +7,26 @@ use Illuminate\Support\ServiceProvider;
 
 class ZohoClientServiceProvider extends ServiceProvider
 {
-    public function register()
+    public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../config/zoho_client.php', 'zoho_client');
 
-        $this->app->singleton(Provider::class, function () {
-            $defaultScopes = config('services.zoho_client.scopes');
-
-            return new Provider(
-                config('services.zoho_client.client_id'),
-                config('services.zoho_client.client_secret'),
-                route('zohoClient.callback'),
-                is_array($defaultScopes) ? $defaultScopes : array_map('trim', explode(',', $defaultScopes))
-            );
-        });
+        $this->app->singleton(Provider::class, fn () => new Provider(
+            clientId     : config('services.zoho_client.client_id'),
+            clientSecret : config('services.zoho_client.client_secret'),
+            redirectUri  : route('zoho-client.callback'),
+            defaultScopes: config('services.zoho_client.scopes')
+        ));
     }
 
-    public function boot()
+    public function boot(): void
     {
         $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
 
         if ($this->app->runningInConsole()) {
-            $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
-
             $this->publishes([
                 __DIR__.'/../config/zoho_client.php' => config_path('zoho_client.php'),
             ], 'config');
-
-            $this->publishes([
-                __DIR__.'/../database/migrations' => database_path('migrations'),
-            ], 'migrations');
         }
     }
 }

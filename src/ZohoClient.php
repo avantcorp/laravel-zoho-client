@@ -4,25 +4,18 @@ namespace Avant\ZohoClient;
 
 use Avant\ZohoClient\OAuth2\Provider;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use Spatie\Valuestore\Valuestore;
 
 abstract class ZohoClient
 {
-    /** @var int|string */
-    private $user;
+    protected string $baseUrl;
+    private ?Carbon $tokenExpiry = null;
+    private ?string $token = null;
 
-    /** @var Carbon */
-    private $tokenExpiry;
-
-    /** @var string */
-    private $token;
-
-    public function __construct($user)
+    public function __construct()
     {
-        $this->user = $user instanceof Model ? $user->getKey() : $user;
-
         if (method_exists($this, 'boot')) {
             app()->call([$this, 'boot']);
         }
@@ -41,30 +34,33 @@ abstract class ZohoClient
         return $this->baseUrl;
     }
 
-    protected function request()
+    protected function request(): PendingRequest
     {
         return Http::baseUrl($this->getBaseUrl())
             ->asJson()
+            ->acceptJson()
             ->withToken($this->getToken(), 'Zoho-oauthtoken');
     }
 
-    private function getToken()
+    private function getToken(): string
     {
-        return Cache::lock("zoho-client.refresh_token.{$this->user}")
+        return cache()
+            ->lock('zoho-client.refresh-token')
             ->block(10, function () {
+                $store = Valuestore::make(config('zoho_client.token_storage_path'));
                 if (is_null($this->tokenExpiry) || is_null($this->token)) {
-                    $zohoAccessToken = ZohoAccessToken::forUser($this->user);
+                    $zohoAccessToken = $store->get('token');
                     $this->tokenExpiry = Carbon::createFromTimestamp($zohoAccessToken->token->getExpires());
                     $this->token = $zohoAccessToken->token->getToken();
                 }
                 if ($this->tokenExpiry->lessThanOrEqualTo(now()->addSeconds(10))) {
-                    $zohoAccessToken = ZohoAccessToken::forUser($this->user);
-                    $zohoAccessToken->update([
-                        'token' => app(Provider::class)->getAccessToken(
-                            'refresh_token',
-                            ['refresh_token' => $zohoAccessToken->refresh_token]
-                        ),
-                    ]);
+                    $zohoAccessToken = $store->get('token');
+
+                    $zohoAccessToken = app(Provider::class)->getAccessToken(
+                        'refresh_token',
+                        ['refresh_token' => $zohoAccessToken->refresh_token]
+                    );
+                    $store->put('token', $zohoAccessToken);
                     $this->tokenExpiry = Carbon::createFromTimestamp($zohoAccessToken->token->getExpires());
                     $this->token = $zohoAccessToken->token->getToken();
                 }
