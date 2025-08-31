@@ -4,6 +4,7 @@ namespace Avant\Zoho\Commands;
 
 use Avant\Zoho\OAuth2\Provider;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Uri;
 use Spatie\Valuestore\Valuestore;
 
@@ -14,11 +15,18 @@ class AuthenticateCommand extends Command
 
     public function handle(Provider $provider): int
     {
-        $this->output->section('Authorization URL');
-        $this->output->writeln($provider->getAuthorizationUrl([
+        $authorizationUrl = $provider->getAuthorizationUrl([
             'access_type' => 'offline',
             'prompt'      => 'consent',
-        ]));
+        ]);
+
+        $xdgOpenExists = Process::run(['which', 'xdg-open']);
+        if ($xdgOpenExists->successful()) {
+            Process::run([trim($xdgOpenExists->output()), $authorizationUrl]);
+        } else {
+            $this->output->section('Authorization URL');
+            $this->output->writeln($authorizationUrl);
+        }
         $state = $provider->getState();
 
         $callbackUrl = Uri::of($this->output->ask('Callback URL'));
