@@ -4,9 +4,11 @@ namespace Avant\Zoho;
 
 use Avant\Zoho\OAuth2\Provider;
 use Carbon\Carbon;
+use GuzzleHttp\Middleware;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use League\OAuth2\Client\Token\AccessToken;
+use Psr\Http\Message\RequestInterface;
 use Spatie\Valuestore\Valuestore;
 
 abstract class Client
@@ -22,8 +24,10 @@ abstract class Client
     protected function request(): PendingRequest
     {
         return Http::baseUrl($this->getBaseUrl())
-            ->asJson()
-            ->acceptJson()
+            ->withMiddleware(Middleware::mapRequest(fn (RequestInterface $request) => collect(['Content-Type', 'Accept'])
+                ->filter(fn(string $header) => !$request->getHeader($header))
+                ->reduce(fn(RequestInterface $request, string $header) => $request->withHeader($header, 'application/json'), $request))
+            )
             ->withToken($this->getToken(), 'Zoho-oauthtoken');
     }
 
